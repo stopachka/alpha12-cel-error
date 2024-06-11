@@ -5,28 +5,6 @@
 
 (def ^ExecutorService default-virtual-thread-executor (Executors/newVirtualThreadPerTaskExecutor))
 
-(defn binding-conveyor-fn
-  "Private function copied from clojure.core;
-   This is useful for carrying over bindings to other threads"
-  [f]
-  (let [frame (clojure.lang.Var/cloneThreadBindingFrame)]
-    (fn
-      ([]
-       (clojure.lang.Var/resetThreadBindingFrame frame)
-       (f))
-      ([x]
-       (clojure.lang.Var/resetThreadBindingFrame frame)
-       (f x))
-      ([x y]
-       (clojure.lang.Var/resetThreadBindingFrame frame)
-       (f x y))
-      ([x y z]
-       (clojure.lang.Var/resetThreadBindingFrame frame)
-       (f x y z))
-      ([x y z & args]
-       (clojure.lang.Var/resetThreadBindingFrame frame)
-       (apply f x y z args)))))
-
 (defn ^:private deref-future
   "Private function copied from clojure.core;
 
@@ -41,7 +19,7 @@
 (defn future-call
   "Like clojure.core/future-call, but accepts an Executor"
   [^ExecutorService executor f]
-  (let [f (binding-conveyor-fn f)
+  (let [f (bound-fn* f)
         fut (.submit executor ^Callable f)]
     (reify
       clojure.lang.IDeref
